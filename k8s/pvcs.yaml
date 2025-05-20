@@ -1,4 +1,5 @@
-# k8s/pvc.yaml
+# PVC for models directory (encodings.pkl)
+# PVC for models directory (encodings.pkl)
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -6,23 +7,13 @@ metadata:
   namespace: face-recognition
 spec:
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi
+  storageClassName: standard  # Add this line
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: data-pvc
-  namespace: face-recognition
-spec:
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 1Gi
----
+# PVC for database
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -30,7 +21,20 @@ metadata:
   namespace: face-recognition
 spec:
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# PVC for data directory (face images)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-pvc
+  namespace: face-recognition
+spec:
+  accessModes:
+    - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi

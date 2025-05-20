@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recognition
+  namespace: face-recognition
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: recognition
+  template:
+    metadata:
+      labels:
+        app: recognition
+    spec:
+      containers:
+      - name: recognition
+        image: face-recognition:latest
+        command: ["/bin/bash"]
+        args:
+        - -c
+        - |
+          set -e
+          echo "Installing required packages..."
+          apt-get update && apt-get install -y \
+            xvfb \
+            libxcb1 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render-util0 \
+            libxcb-shape0 \
+            libxcb-sync1 \
+            libxcb-xfixes0 \
+            libxcb-xinerama0 \
+            libxcb-xkb1 \
+            libxkbcommon-x11-0 \
+            libxkbcommon0 \
+            qt5-default \
+            libqt5gui5 \
+            libqt5core5a \
+            libqt5dbus5
+          
+          echo "Setting up Xvfb..."
+          Xvfb :0 -screen 0 1024x768x24 &
+          XVFB_PID=$!
+          
+          echo "Setting display..."
+          export DISPLAY=:0
+          
+          echo "Waiting for Xvfb to start..."
+          sleep 2
+          
+          echo "Running recognition service..."
+          cd /app
+          python recognition_service.py
+          
+          # Cleanup
+          kill $XVFB_PID
+        volumeMounts:
+        - name: models-volume
+          mountPath: /app/models
+        - name: db-volume
+          mountPath: /app/db
+        - name: data-volume
+          mountPath: /app/data
+      volumes:
+      - name: models-volume
+        persistentVolumeClaim:
+          claimName: models-pvc
+      - name: db-volume
+        persistentVolumeClaim:
+          claimName: db-pvc
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: data-pvc
