@@ -1,0 +1,8 @@
+# k8s/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: face-recognition-config
+  namespace: face-recognition
+data:
+  DISPLAY: ":0"
