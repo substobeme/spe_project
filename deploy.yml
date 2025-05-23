@@ -1,0 +1,29 @@
+- name: Local deployment of face recognition system
+  hosts: localhost
+  connection: local
+  become: true
+
+  vars:
+    project_dir: "/home/subha/SPE_Final_project"
+
+  tasks:
+    - name: Ensure required directories exist
+      file:
+        path: "{{ project_dir }}/{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - data
+        - models
+        - db
+        - mlruns
+
+    - name: Set up X11 permissions for Docker (optional)
+      shell: xhost +local:docker
+      ignore_errors: yes
+
+    - name: Pull and run containers with Docker Compose
+      shell: |
+        cd {{ project_dir }}
+        docker-compose pull
+        docker-compose up -d
