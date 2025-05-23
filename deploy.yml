@@ -2,12 +2,32 @@
   hosts: localhost
   connection: local
   become: true
-
   vars:
     project_dir: "/home/subha/SPE_Final_project"
-
   tasks:
-    - name: Ensure required directories exist
+    - name: Check if Docker is installed
+      command: docker --version
+      register: docker_check
+      failed_when: false
+      changed_when: false
+
+    - name: Fail if Docker is not installed
+      fail:
+        msg: "Docker is not installed. Please install Docker before running this playbook."
+      when: docker_check.rc != 0
+
+    - name: Check if Docker Compose is installed
+      command: docker-compose --version
+      register: docker_compose_check
+      failed_when: false
+      changed_when: false
+
+    - name: Fail if Docker Compose is not installed
+      fail:
+        msg: "Docker Compose is not installed. Please install Docker Compose before running this playbook."
+      when: docker_compose_check.rc != 0
+
+    - name: Ensure all required directories exist
       file:
         path: "{{ project_dir }}/{{ item }}"
         state: directory
@@ -15,15 +35,52 @@
       loop:
         - data
         - models
-        - db
         - mlruns
+        - db
+        - templates
+        - static
 
-    - name: Set up X11 permissions for Docker (optional)
-      shell: xhost +si:localuser:root
+    - name: Check if webcam is available
+      stat:
+        path: /dev/video0
+      register: webcam_check
+
+    - name: Warn if no webcam found
+      debug:
+        msg: "Warning: No webcam found at /dev/video0. The recognition service may not work properly."
+      when: not webcam_check.stat.exists
+
+    - name: Check if data directory has content
+      find:
+        paths: "{{ project_dir }}/data"
+        file_type: any
+      register: data_content
+
+    - name: Warn if data directory is empty
+      debug:
+        msg: |
+          Warning: The data directory is empty. You should add face images to the data directory before training.
+          Create subdirectories for each person (e.g., data/1/, data/2/) and add face images to these directories.
+      when: data_content.matched == 0
+
+    - name: Set up X11 permissions for Docker
+      shell: xhost +local:docker
       ignore_errors: yes
+      become: false
 
-    - name: Pull and run containers with Docker Compose
-      shell: |
-        cd {{ project_dir }}
-        docker-compose pull
-        docker-compose up -d
+    - name: Pull Docker images
+      shell: docker-compose pull
+      args:
+        chdir: "{{ project_dir }}"
+
+    - name: Start containers with Docker Compose
+      shell: docker-compose up -d
+      args:
+        chdir: "{{ project_dir }}"
+
+    - name: Display success message
+      debug:
+        msg: |
+          The Face Recognition system is now running!
+          Web interface available at: http://localhost:5002
+          To stop the system, run: docker-compose down
