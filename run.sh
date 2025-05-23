@@ -41,6 +41,5 @@ docker-compose up -d
 
 echo "The system is now running!"
 echo "Web interface available at: http://localhost:5002"
-echo "MLFlow tracking available at: http://localhost:5050"
 echo ""
 echo "To stop the system, run: docker-compose down"
