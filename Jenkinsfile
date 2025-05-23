@@ -13,13 +13,19 @@ pipeline {
             }
         }
 
-        stage('Build & Push Docker Images') {
+        stage('Build Docker Images') {
             steps {
                 script {
                     sh "docker build -t ${DOCKER_IMAGE_NAME}:training -f Dockerfile.training ."
                     sh "docker build -t ${DOCKER_IMAGE_NAME}:recognition -f Dockerfile.recognition ."
                     sh "docker build -t ${DOCKER_IMAGE_NAME}:frontend -f Dockerfile.frontend ."
+                }
+            }
+        }
 
+        stage('Push Docker Images') {
+            steps {
+                script {
                     docker.withRegistry('', 'mydocker') {
                         sh "docker push ${DOCKER_IMAGE_NAME}:training"
                         sh "docker push ${DOCKER_IMAGE_NAME}:recognition"
