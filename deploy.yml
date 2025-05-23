@@ -1,21 +1,21 @@
 ---
-- name: Local deployment of face recognition system using run.sh
+- name: Pull and deploy Face Recognition system
   hosts: localhost
   connection: local
   become: true
   vars:
     project_dir: "/home/subha/SPE_Final_project"
+    image_base: "substobeme/spe_project"
 
   tasks:
-    - name: Check if run.sh script exists
-      stat:
-        path: "{{ project_dir }}/run.sh"
-      register: run_script
+    - name: Pull training image
+      shell: docker pull {{ image_base }}:training
 
-    - name: Fail if run.sh script is not found
-      fail:
-        msg: "run.sh script not found in {{ project_dir }}. Please ensure the script is present."
-      when: not run_script.stat.exists
+    - name: Pull recognition image
+      shell: docker pull {{ image_base }}:recognition
+
+    - name: Pull frontend image
+      shell: docker pull {{ image_base }}:frontend
 
     - name: Ensure run.sh is executable
       file:
@@ -23,7 +23,15 @@
         mode: '0755'
         state: file
 
-    - name: Execute the run.sh script
-      shell: ./run.sh
+    - name: Run the deployment script
+      shell: ./run.sh 2>&1 | tee run_output.log
       args:
         chdir: "{{ project_dir }}"
+      register: run_output
+      environment:
+        TERM: xterm
+        DISPLAY: "{{ lookup('env', 'DISPLAY') | default(':0') }}"
+
+    - name: Show script output
+      debug:
+        var: run_output.stdout_lines
