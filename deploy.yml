@@ -6,7 +6,8 @@
   vars:
     project_dir: "/home/subha/SPE_Final_project"
     image_base: "substobeme/spe_project"
-
+    display_var: "{{ lookup('env', 'DISPLAY') | default(':0') }}"
+  
   tasks:
     - name: Pull training image
       shell: docker pull {{ image_base }}:training
@@ -17,21 +18,45 @@
     - name: Pull frontend image
       shell: docker pull {{ image_base }}:frontend
 
+    - name: Check if run.sh script exists
+      stat:
+        path: "{{ project_dir }}/run.sh"
+      register: run_script
+
+    - name: Fail if run.sh script is not found
+      fail:
+        msg: "The run.sh script does not exist."
+      when: not run_script.stat.exists
+
     - name: Ensure run.sh is executable
       file:
         path: "{{ project_dir }}/run.sh"
         mode: '0755'
         state: file
 
-    - name: Run the deployment script
+    - name: Allow Docker to access X11 (for GUI apps)
+      shell: xhost +local:docker
+      ignore_errors: true
+
+    - name: Run the deployment script (run.sh) with output logging
       shell: ./run.sh 2>&1 | tee run_output.log
       args:
         chdir: "{{ project_dir }}"
       register: run_output
       environment:
         TERM: xterm
-        DISPLAY: "{{ lookup('env', 'DISPLAY') | default(':0') }}"
+        DISPLAY: "{{ display_var }}"
 
     - name: Show script output
       debug:
         var: run_output.stdout_lines
+
+    - name: Run docker-compose down and up with DISPLAY
+      shell: |
+        DISPLAY={{ display_var }} docker-compose down
+        DISPLAY={{ display_var }} docker-compose up -d
+      args:
+        chdir: "{{ project_dir }}"
+      environment:
+        DISPLAY: "{{ display_var }}"
+
