@@ -81,6 +81,5 @@
     - name: Display success message
       debug:
         msg: |
-          The Face Recognition system is now running!
           Web interface available at: http://localhost:5002
-          To stop the system, run: docker-compose down
+        
