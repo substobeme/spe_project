@@ -40,3 +40,4 @@ EXPOSE 5002
 
 # Start the Flask application
 CMD ["python", "app.py"]
+
