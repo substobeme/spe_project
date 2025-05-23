@@ -2,7 +2,7 @@
 - name: Deploy Face Recognition system using run.sh
   hosts: localhost
   connection: local
-  become: false  # IMPORTANT: Don't escalate or you'll lose X11 access
+  become: true
 
   vars:
     project_dir: "/home/subha/SPE_Final_project"
