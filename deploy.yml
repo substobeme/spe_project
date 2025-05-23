@@ -2,17 +2,26 @@
 - name: Deploy Face Recognition system using run.sh
   hosts: localhost
   connection: local
-  become: true
+  become: false  # IMPORTANT: Don't escalate or you'll lose X11 access
+
   vars:
     project_dir: "/home/subha/SPE_Final_project"
     display_var: "{{ lookup('env', 'DISPLAY') | default(':0') }}"
-  
+
   tasks:
-    - name: Pull all required Docker images (optional, speeds up run.sh)
+    - name: Print DISPLAY environment variable (debugging)
+      debug:
+        msg: "DISPLAY is set to {{ display_var }}"
+
+    - name: Grant X11 permissions for Docker
+      shell: xhost +local:docker
+      when: ansible_facts['env']['DISPLAY'] is defined
+
+    - name: Pull all required Docker images (optional)
       shell: |
-        docker pull substobeme/spe_project:training
-        docker pull substobeme/spe_project:recognition
-        docker pull substobeme/spe_project:frontend
+        docker pull substobeme/spe_project:training || true
+        docker pull substobeme/spe_project:recognition || true
+        docker pull substobeme/spe_project:frontend || true
 
     - name: Check if run.sh exists
       stat:
@@ -29,13 +38,13 @@
         path: "{{ project_dir }}/run.sh"
         mode: '0755'
 
-    - name: Run deployment script run.sh with environment
+    - name: Run deployment script run.sh with DISPLAY environment
       shell: ./run.sh 2>&1 | tee run_output.log
       args:
         chdir: "{{ project_dir }}"
       environment:
-        TERM: xterm
         DISPLAY: "{{ display_var }}"
+        TERM: xterm
       register: run_output
 
     - name: Show run.sh output
