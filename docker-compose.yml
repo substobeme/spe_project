@@ -21,13 +21,23 @@ services:
       - ./data:/app/data
       - ./db:/app/db
       - /tmp/.X11-unix:/tmp/.X11-unix
+      - /tmp/.docker.xauth:/tmp/.docker.xauth:rw:rw
+      - /home/${USER}/.Xauthority:/root/.Xauthority:rw
     depends_on:
       - training
     environment:
       - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - XAUTHORITY=/tmp/.docker.xauth
+      - QT_X11_NO_MITSHM=1
+      - XAUTHORITY=/root/.Xauthority
+      # Qt plugin and platform settings
+      - QT_QPA_PLATFORM=offscreen
+      - QT_PLUGIN_PATH=/usr/local/lib/python3.9/site-packages/cv2/qt/plugins
+      - QT_QPA_PLATFORM_PLUGIN_PATH=/usr/local/lib/python3.9/site-packages/cv2/qt/plugins
+      - OPENCV_VIDEOIO_PRIORITY_V4L2=0
     devices:
       - /dev/video0:/dev/video0
-    # Make sure the container stays running
     tty: true
     stdin_open: true
 
