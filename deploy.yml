@@ -1,4 +1,3 @@
----
 - name: Deploy Face Recognition system using run.sh
   hosts: localhost
   connection: local
