@@ -45,7 +45,7 @@ def index():
 def view_logs():
     try:
         conn = get_db_connection()
-        logs = conn.execute('SELECT id, name, timestamp FROM face_log ORDER BY id DESC').fetchall()
+        logs = conn.execute('SELECT id, name, timestamp FROM face_log ORDER BY id DESC LIMIT 50').fetchall()
         print(f"Fetched {len(logs)} rows from face_log")
         conn.close()
         return render_template('logs.html', logs=logs)
