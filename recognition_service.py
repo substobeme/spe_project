@@ -2,7 +2,7 @@ import cv2
 import pickle
 import face_recognition
 import sqlite3
-from datetime import datetime
+from datetime import datetime,timedelta
 import os
 import io
 import time
@@ -130,7 +130,7 @@ class FaceRecognizer:
                         raw_name = self.data["names"][idx]
                         name = self.label_map.get(raw_name, raw_name)
 
-                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    timestamp = (datetime.utcnow() + timedelta(hours=5, minutes=30)).strftime("%Y-%m-%d %H:%M:%S")
 
                     # Convert frame to bytes for BLOB storage
                     frame_bytes = self.frame_to_bytes(frame)
