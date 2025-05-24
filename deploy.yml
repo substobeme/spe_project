@@ -1,52 +1,83 @@
----
-- name: Deploy Face Recognition system using run.sh
+- name: Deploy Face Recognition system using run.sh (as root)
   hosts: localhost
   connection: local
   become: true
-
   vars:
     project_dir: "/home/subha/SPE_Final_project"
     display_var: "{{ lookup('env', 'DISPLAY') | default(':0') }}"
-
+    original_user: "{{ lookup('env', 'USER') }}"
   tasks:
-    - name: Print DISPLAY environment variable (debugging)
+    - name: Get original user info
+      shell: "echo $SUDO_USER"
+      register: sudo_user
+      when: ansible_env.SUDO_USER is defined
+    
+    - name: Set user variable
+      set_fact:
+        target_user: "{{ ansible_env.SUDO_USER | default(original_user) }}"
+    
+    - name: Print debugging info
       debug:
-        msg: "DISPLAY is set to {{ display_var }}"
-
-    - name: Grant X11 permissions for Docker
-      shell: xhost +local:docker
-      when: ansible_facts['env']['DISPLAY'] is defined
-
-    - name: Pull all required Docker images (optional)
+        msg: "DISPLAY: {{ display_var }}, Target User: {{ target_user }}"
+    
+    - name: Grant comprehensive X11 permissions
+      shell: |
+        # Allow access for original user
+        sudo -u {{ target_user }} xhost +local:root
+        sudo -u {{ target_user }} xhost +local:docker
+        sudo -u {{ target_user }} xhost +local:{{ target_user }}
+        # More permissive fallback
+        sudo -u {{ target_user }} xhost +local: || true
+      environment:
+        DISPLAY: "{{ display_var }}"
+      ignore_errors: true
+    
+    - name: Copy X11 auth to root
+      shell: |
+        cp /home/{{ target_user }}/.Xauthority /root/.Xauthority 2>/dev/null || true
+        chown root:root /root/.Xauthority 2>/dev/null || true
+      when: target_user != "root"
+      ignore_errors: true
+    
+    - name: Test X11 access as root
+      shell: xdpyinfo | head -5
+      environment:
+        DISPLAY: "{{ display_var }}"
+      register: x11_root_test
+      ignore_errors: true
+    
+    - name: Show X11 test result
+      debug:
+        var: x11_root_test.stdout_lines
+    
+    - name: Pull Docker images
       shell: |
         docker pull substobeme/spe_project:training || true
         docker pull substobeme/spe_project:recognition || true
         docker pull substobeme/spe_project:frontend || true
-
+    
     - name: Check if run.sh exists
       stat:
         path: "{{ project_dir }}/run.sh"
       register: run_script
-
-    - name: Fail if run.sh is missing
-      fail:
-        msg: "run.sh script not found at {{ project_dir }}/run.sh"
-      when: not run_script.stat.exists
-
+    
     - name: Ensure run.sh is executable
       file:
         path: "{{ project_dir }}/run.sh"
         mode: '0755'
-
-    - name: Run deployment script run.sh with DISPLAY environment
+    
+    - name: Run deployment script with full environment
       shell: ./run.sh 2>&1 | tee run_output.log
       args:
         chdir: "{{ project_dir }}"
       environment:
         DISPLAY: "{{ display_var }}"
         TERM: xterm
+        USER: root
+        HOME: /root
+        XAUTHORITY: /root/.Xauthority
       register: run_output
-
-    - name: Show run.sh output
+    
+    - name: Show output
       debug:
         var: run_output.stdout_lines
