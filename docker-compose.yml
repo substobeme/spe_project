@@ -17,7 +17,6 @@ services:
       - ./data:/app/data
       - ./db:/app/db
       - /tmp/.X11-unix:/tmp/.X11-unix
-      - /tmp/.docker.xauth:/tmp/.docker.xauth:rw
       - /home/${USER}/.Xauthority:/root/.Xauthority:rw
     depends_on:
       - training
@@ -25,12 +24,15 @@ services:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
       - XAUTHORITY=/root/.Xauthority
-      - QT_QPA_PLATFORM=offscreen
+      - QT_QPA_PLATFORM=xcb
       - QT_PLUGIN_PATH=/usr/local/lib/python3.9/site-packages/cv2/qt/plugins
       - QT_QPA_PLATFORM_PLUGIN_PATH=/usr/local/lib/python3.9/site-packages/cv2/qt/plugins
       - OPENCV_VIDEOIO_PRIORITY_V4L2=0
     devices:
       - /dev/video0:/dev/video0
+    cap_add:
+      - SYS_ADMIN
+    privileged: true
     tty: true
     stdin_open: true
 
