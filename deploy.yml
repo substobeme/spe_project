@@ -7,87 +7,29 @@
     project_dir: "/home/subha/SPE_Final_project"
     display_var: "{{ lookup('env', 'DISPLAY') | default(':0') }}"
   tasks:
-    - name: Print current user (debugging)
-      shell: whoami
-      register: current_user
-    
     - name: Print DISPLAY environment variable (debugging)
       debug:
-        msg: "DISPLAY is set to {{ display_var }}, running as {{ current_user.stdout }}"
-    
-    - name: Check if X11 server is accessible
-      shell: xdpyinfo > /dev/null 2>&1
-      register: x11_check
-      ignore_errors: true
-    
-    - name: Setup X11 and video device permissions
-      shell: |
-        # Grant X11 permissions
-        xhost +local:$(whoami)
-        xhost +local:docker
-        xhost +local:root
-        
-        # Set video device permissions
-        if [ -e /dev/video0 ]; then
-          sudo chmod 666 /dev/video0
-          echo "Set permissions for /dev/video0"
-        fi
-        
-        # Check if webcam is in use
-        if lsof /dev/video0 2>/dev/null; then
-          echo "WARNING: Webcam is in use by another process"
-          lsof /dev/video0
-        fi
-      when: x11_check.rc == 0
-      become: true
-      
-    - name: Alternative X11 permission setup if needed
-      shell: |
-        # More permissive but less secure - use only if above doesn't work
-        xhost +local:
-      when: x11_check.rc != 0
-      ignore_errors: true
-    
-    - name: Verify Docker access to X11
-      shell: |
-        docker run --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix alpine:latest sh -c "apk add --no-cache xdpyinfo && xdpyinfo" || echo "X11 test failed but continuing..."
-      register: docker_x11_test
-      ignore_errors: true
-    
-    - name: Show X11 Docker test result
-      debug:
-        var: docker_x11_test.stdout_lines
-    
+        msg: "DISPLAY is set to {{ display_var }}"
+    - name: Grant X11 permissions for Docker
+      shell: xhost +local:docker
+      when: ansible_facts['env']['DISPLAY'] is defined
     - name: Pull all required Docker images (optional)
       shell: |
         docker pull substobeme/spe_project:training || true
         docker pull substobeme/spe_project:recognition || true
         docker pull substobeme/spe_project:frontend || true
-    
     - name: Check if run.sh exists
       stat:
         path: "{{ project_dir }}/run.sh"
       register: run_script
-    
     - name: Fail if run.sh is missing
       fail:
         msg: "run.sh script not found at {{ project_dir }}/run.sh"
       when: not run_script.stat.exists
-    
     - name: Ensure run.sh is executable
       file:
         path: "{{ project_dir }}/run.sh"
         mode: '0755'
-    
-    - name: Set proper ownership of project files
-      file:
-        path: "{{ project_dir }}"
-        owner: "{{ ansible_user_id }}"
-        group: "{{ ansible_user_gid }}"
-        recurse: true
-      become: true
-      when: ansible_user_id != "root"
-    
     - name: Run deployment script run.sh with DISPLAY environment
       shell: ./run.sh 2>&1 | tee run_output.log
       args:
@@ -95,16 +37,7 @@
       environment:
         DISPLAY: "{{ display_var }}"
         TERM: xterm
-        USER: "{{ ansible_user_id }}"
-        HOME: "{{ ansible_env.HOME }}"
-        XDG_RUNTIME_DIR: "{{ ansible_env.XDG_RUNTIME_DIR | default('') }}"
       register: run_output
-    
     - name: Show run.sh output
       debug:
         var: run_output.stdout_lines
-    
-    - name: Show any errors from run.sh
-      debug:
-        var: run_output.stderr_lines
-      when: run_output.stderr_lines is defined and run_output.stderr_lines | length > 0
