@@ -130,7 +130,8 @@ class FaceRecognizer:
                         raw_name = self.data["names"][idx]
                         name = self.label_map.get(raw_name, raw_name)
 
-                    timestamp = (datetime.utcnow() + timedelta(hours=5, minutes=30)).strftime("%Y-%m-%d %H:%M:%S")
+                    from zoneinfo import ZoneInfo
+                    timestamp = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S")
 
                     # Convert frame to bytes for BLOB storage
                     frame_bytes = self.frame_to_bytes(frame)
