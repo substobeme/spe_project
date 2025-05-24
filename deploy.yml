@@ -2,7 +2,6 @@
 - name: Deploy Face Recognition system using run.sh
   hosts: localhost
   connection: local
-  # Remove become: true to run as regular user
   vars:
     project_dir: "/home/subha/SPE_Final_project"
     display_var: "{{ lookup('env', 'DISPLAY') | default(':0') }}"
