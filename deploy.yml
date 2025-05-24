@@ -30,13 +30,20 @@
       file:
         path: "{{ project_dir }}/run.sh"
         mode: '0755'
-    - name: Run deployment script run.sh with DISPLAY environment
+    - name: Run deployment script run.sh with Qt and display environment
       shell: ./run.sh 2>&1 | tee run_output.log
       args:
         chdir: "{{ project_dir }}"
       environment:
         DISPLAY: "{{ display_var }}"
         TERM: xterm
+        # Qt environment variables to fix XCB issues
+        QT_QPA_PLATFORM: "offscreen"
+        QT_X11_NO_MITSHM: "1"
+        QT_PLUGIN_PATH: "/usr/local/lib/python3.9/site-packages/cv2/qt/plugins"
+        QT_QPA_PLATFORM_PLUGIN_PATH: "/usr/local/lib/python3.9/site-packages/cv2/qt/plugins"
+        # OpenCV environment variables
+        OPENCV_VIDEOIO_PRIORITY_V4L2: "0"
       register: run_output
     - name: Show run.sh output
       debug:
