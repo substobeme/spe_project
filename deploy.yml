@@ -5,7 +5,7 @@
   become: true
   vars:
     project_dir: "/home/subha/SPE_Final_project"
-    display_var: "{{ lookup('env', 'DISPLAY') | default(':0') }}"
+    display_var: ":0"
   tasks:
     - name: Print DISPLAY environment variable (debugging)
       debug:
