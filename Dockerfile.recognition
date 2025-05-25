@@ -30,5 +30,4 @@ COPY recognition_service.py .
 # Create necessary directories
 RUN mkdir -p /app/db /app/models
 
-# Define command to run on container start
 CMD ["python", "recognition_service.py"]
