@@ -30,7 +30,7 @@ pipeline {
 
       sh "mkdir -p ${workspace}/ansible-logs"
 
-      // Remove old containers if any
+      // Remove old containers 
       sh "docker rm -f loki || true"
       sh "docker rm -f promtail || true"
 
