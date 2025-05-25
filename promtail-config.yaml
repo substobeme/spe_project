@@ -15,4 +15,4 @@ scrape_configs:
           - localhost
         labels:
           job: ansible
-          __path__: /ansible-logs/*.log
+          __path__: /ansible-logs/*.log //here the logs are stored
