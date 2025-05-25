@@ -10,3 +10,4 @@
     - docker_images
     - check_run_script
     - run_deployment
+    - monitoring
