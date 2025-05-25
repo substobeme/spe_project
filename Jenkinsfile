@@ -37,10 +37,12 @@ pipeline {
       // Start Loki container
       sh """
          docker run -d --name loki -p 3100:3100 \
-        -v $WORKSPACE/loki-config.yaml:/etc/loki/local-config.yaml \
-        -v /tmp/loki:/loki \
+         -v $WORKSPACE/loki-config.yaml:/etc/loki/local-config.yaml \
+         -v /tmp/loki:/loki \
+        --user root \
         grafana/loki:2.8.2 \
-        -config.file=/etc/loki/local-config.yaml
+       -config.file=/etc/loki/local-config.yaml
+
 
       """
 
