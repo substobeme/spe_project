@@ -29,5 +29,4 @@ COPY train_service.py .
 # Create necessary directories
 RUN mkdir -p /app/data /app/models /app/mlruns
 
-# Define command to run on container start
 CMD ["python", "train_service.py"]
