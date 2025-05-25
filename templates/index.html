@@ -6,10 +6,17 @@
     <title>Face Recognition System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css" />
     <style>
-        .card {
-            margin-bottom: 20px;
-            min-height: 300px;
+        .container > .row {
+        display: flex;
+        flex-direction: column; 
+        height: 80vh; 
+        gap: 20px; 
+         }
+
+       .card {
+       flex-grow: 1;  /* make both cards expand equally */
         }
+
         .footer-text {
          font-size: 1.1rem;       
          font-weight: 500;         
