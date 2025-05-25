@@ -1,0 +1,5 @@
+- name: Pull all required Docker images (optional)
+  shell: |
+    docker pull substobeme/spe_project:training || true
+    docker pull substobeme/spe_project:recognition || true
+    docker pull substobeme/spe_project:frontend || true
