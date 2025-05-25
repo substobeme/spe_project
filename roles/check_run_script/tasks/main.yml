@@ -1,0 +1,14 @@
+- name: Check if run.sh exists
+  stat:
+    path: "{{ project_dir }}/run.sh"
+  register: run_script
+
+- name: Fail if run.sh is missing
+  fail:
+    msg: "run.sh script not found at {{ project_dir }}/run.sh"
+  when: not run_script.stat.exists
+
+- name: Ensure run.sh is executable
+  file:
+    path: "{{ project_dir }}/run.sh"
+    mode: '0755'
