@@ -1,0 +1,13 @@
+- name: Run deployment script run.sh with GUI display environment
+  shell: ./run.sh 2>&1 | tee run_output.log
+  args:
+    chdir: "{{ project_dir }}"
+  environment:
+    DISPLAY: "{{ display_var }}"
+    TERM: xterm
+    QT_X11_NO_MITSHM: "1"
+  register: run_output
+
+- name: Show run.sh output
+  debug:
+    var: run_output.stdout_lines
