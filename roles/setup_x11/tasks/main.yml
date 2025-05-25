@@ -1,0 +1,19 @@
+- name: Print DISPLAY environment variable (debugging)
+  debug:
+    msg: "DISPLAY is set to {{ display_var }}"
+
+- name: Setup X11 permissions and prepare for GUI display
+  shell: |
+    xhost +local:docker
+    xhost +local:root
+    xhost +local:$(whoami)
+
+    sudo cp ~/.Xauthority /tmp/.docker.xauth 2>/dev/null || true
+    sudo chmod 644 /tmp/.docker.xauth 2>/dev/null || true
+
+    if [ -e /dev/video0 ]; then
+      sudo chmod 666 /dev/video0
+    fi
+
+    echo "X11 setup complete for GUI display"
+  when: ansible_facts['env']['DISPLAY'] is defined
