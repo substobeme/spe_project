@@ -1,0 +1,6 @@
+- name: Clone the Face Recognition project from GitHub
+  git:
+    repo: 'https://github.com/YOUR_USERNAME/YOUR_REPO.git'
+    dest: "{{ project_dir }}"
+    version: main
+    force: yes
