@@ -36,10 +36,12 @@ pipeline {
 
       // Start Loki container
       sh """
-        docker run -d --name loki -p 3100:3100 \
-          -v ${workspace}/loki-config.yaml:/etc/loki/local-config.yaml \
-          grafana/loki:2.8.2 \
-          -config.file=/etc/loki/local-config.yaml
+         docker run -d --name loki -p 3100:3100 \
+        -v $WORKSPACE/loki-config.yaml:/etc/loki/local-config.yaml \
+        -v /tmp/loki:/loki \
+        grafana/loki:2.8.2 \
+        -config.file=/etc/loki/local-config.yaml
+
       """
 
       // Start Promtail container mounting ansible-logs and config
