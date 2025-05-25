@@ -25,44 +25,36 @@ pipeline {
 
         stage('Push Docker Images') {
             steps {
-                script {
-                    docker.withRegistry('', 'mydocker') {
-                        sh "docker push ${DOCKER_IMAGE_NAME}:training"
-                        sh "docker push ${DOCKER_IMAGE_NAME}:recognition"
-                        sh "docker push ${DOCKER_IMAGE_NAME}:frontend"
-                    }
-                }
-            }
-        }
+               script {
+      def workspace = env.WORKSPACE
 
-        stage('Deploy with Ansible') {
-            steps {
-                script {
-            // Create folder for ansible logs
-            sh 'mkdir -p ansible-logs'
+      sh "mkdir -p ${workspace}/ansible-logs"
 
-            // Start Loki container
-            sh '''
-              docker run -d --name loki -p 3100:3100 \
-                -v $WORKSPACE/loki-config.yaml:/etc/loki/local-config.yaml \
-                grafana/loki:2.8.2 \
-                -config.file=/etc/loki/local-config.yaml
-            '''
+      // Remove old containers if any
+      sh "docker rm -f loki || true"
+      sh "docker rm -f promtail || true"
 
-            // Start Promtail container mounting ansible-logs and config
-            sh '''
-              docker run -d --name promtail \
-                -v $WORKSPACE/ansible-logs:/ansible-logs:ro \
-                -v $WORKSPACE/promtail-config.yaml:/etc/promtail/config.yaml \
-                --network host \
-                grafana/promtail:2.8.2 \
-                -config.file=/etc/promtail/config.yaml
-            '''
+      // Start Loki container
+      sh """
+        docker run -d --name loki -p 3100:3100 \
+          -v ${workspace}/loki-config.yaml:/etc/loki/local-config.yaml \
+          grafana/loki:2.8.2 \
+          -config.file=/etc/loki/local-config.yaml
+      """
 
-            // Run ansible playbook and output logs into monitored folder
-            sh 'ansible-playbook -i inventory.ini deploy.yml | tee ansible-logs/deploy.log'
+      // Start Promtail container mounting ansible-logs and config
+      sh """
+        docker run -d --name promtail \
+          -v ${workspace}/ansible-logs:/ansible-logs:ro \
+          -v ${workspace}/promtail-config.yaml:/etc/promtail/config.yaml \
+          --network host \
+          grafana/promtail:2.8.2 \
+          -config.file=/etc/promtail/config.yaml
+      """
 
-             }
+      // Run ansible playbook and output logs into monitored folder
+      sh "ansible-playbook -i ${workspace}/inventory.ini ${workspace}/deploy.yml | tee ${workspace}/ansible-logs/deploy.log"
+    }
             }
         }
     }
